@@ -1,6 +1,6 @@
 {
   "name": "@digital-nature/licence-verifier",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "JavaScript/TypeScript client for the Digital Nature licence verification API",
   "type": "module",
   "exports": {
@@ -13,7 +13,9 @@
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup",
     "test": "node --import tsx/esm --test tests/**/*.test.ts",
