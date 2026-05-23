@@ -1,6 +1,6 @@
 {
   "name": "@digital-nature/licence-verifier",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "JavaScript/TypeScript client for the Digital Nature licence verification API",
   "type": "module",
   "exports": {
@@ -26,6 +26,10 @@
     "tsup": "^8.0.0",
     "tsx": "^4.0.0",
     "typescript": "^5.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Digital-Nature-LTD/software.digital-nature.co.uk-licence-verifier-js"
   },
   "engines": {
     "node": ">=18"
