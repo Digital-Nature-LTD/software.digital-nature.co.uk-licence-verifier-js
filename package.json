@@ -1,6 +1,6 @@
 {
   "name": "@digital-nature/licence-verifier",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "JavaScript/TypeScript client for the Digital Nature licence verification API",
   "type": "module",
   "exports": {

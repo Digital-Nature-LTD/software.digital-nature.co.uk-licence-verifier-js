@@ -13,5 +13,6 @@ export type {
   ActivateResult,
   DeactivateResult,
   InfoResult,
+  UpdateResult,
   LicenceDomain,
 } from './types.js'
