@@ -43,6 +43,14 @@ export interface InfoResult {
   domains: LicenceDomain[]
 }
 
+export interface UpdateResult {
+  updateAvailable: boolean
+  latestVersion: string | null
+  downloadToken: string | null
+  /** Pre-constructed download URL. Pass directly to WordPress's package field or trigger a download. Valid for 5 minutes. */
+  downloadUrl: string | null
+}
+
 // Raw API response shapes (snake_case from server)
 export interface RawVerifyResponse {
   valid: boolean
@@ -63,6 +71,12 @@ export interface RawActivateResponse {
 export interface RawDeactivateResponse {
   deactivated: boolean
   domain: string
+}
+
+export interface RawUpdateResponse {
+  update_available: boolean
+  latest_version: string | null
+  download_token: string | null
 }
 
 export interface RawDomain {

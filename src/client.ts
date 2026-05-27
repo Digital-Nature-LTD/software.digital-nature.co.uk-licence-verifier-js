@@ -1,7 +1,7 @@
 import type {
   LicenceVerifierOptions,
-  VerifyResult, ActivateResult, DeactivateResult, InfoResult,
-  RawVerifyResponse, RawActivateResponse, RawDeactivateResponse, RawInfoResponse,
+  VerifyResult, ActivateResult, DeactivateResult, InfoResult, UpdateResult,
+  RawVerifyResponse, RawActivateResponse, RawDeactivateResponse, RawInfoResponse, RawUpdateResponse,
 } from './types.js'
 import {
   LicenceVerifierError, LicenceNotFoundError, LicenceInactiveError,
@@ -97,6 +97,20 @@ export class LicenceVerifier {
     const raw = await this.request<RawDeactivateResponse>('POST', '/deactivate', { licence_key: licenceKey, domain })
     this.invalidate(`verify:${licenceKey}`, `info:${licenceKey}`)
     return { deactivated: raw.deactivated, domain: raw.domain }
+  }
+
+  async checkForUpdate(licenceKey: string, currentVersion?: string): Promise<UpdateResult> {
+    const qs = `licence_key=${encodeURIComponent(licenceKey)}${currentVersion ? `&current_version=${encodeURIComponent(currentVersion)}` : ''}`
+    const raw = await this.request<RawUpdateResponse>('GET', `/update?${qs}`)
+    const downloadUrl = raw.download_token
+      ? `${this.baseUrl}/download?token=${encodeURIComponent(raw.download_token)}`
+      : null
+    return {
+      updateAvailable: raw.update_available,
+      latestVersion: raw.latest_version,
+      downloadToken: raw.download_token,
+      downloadUrl,
+    }
   }
 
   async info(licenceKey: string): Promise<InfoResult> {
