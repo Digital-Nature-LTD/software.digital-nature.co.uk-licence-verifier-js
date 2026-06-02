@@ -123,6 +123,55 @@ describe('info', () => {
   })
 })
 
+// ─── checkForUpdate ──────────────────────────────────────────────────────────
+
+describe('checkForUpdate', () => {
+  it('returns a camelCase result when an update is available', async () => {
+    const client = makeClient(200, {
+      update_available: true, latest_version: '2.0.0', download_token: 'tok_abc123',
+    })
+    const result = await client.checkForUpdate('KEY')
+    assert.equal(result.updateAvailable, true)
+    assert.equal(result.latestVersion, '2.0.0')
+    assert.equal(result.downloadToken, 'tok_abc123')
+    assert.equal(result.downloadUrl, 'https://verify.example.com/download?token=tok_abc123')
+  })
+
+  it('returns updateAvailable: false with null tokens when no versions exist', async () => {
+    const client = makeClient(200, {
+      update_available: false, latest_version: null, download_token: null,
+    })
+    const result = await client.checkForUpdate('KEY')
+    assert.equal(result.updateAvailable, false)
+    assert.equal(result.latestVersion, null)
+    assert.equal(result.downloadToken, null)
+    assert.equal(result.downloadUrl, null)
+  })
+
+  it('sends current_version in the query string when provided', async () => {
+    let capturedUrl = ''
+    const fetchFn: typeof globalThis.fetch = async (input) => {
+      capturedUrl = input.toString()
+      return new Response(JSON.stringify({ update_available: false, latest_version: '1.0.0', download_token: null }), {
+        status: 200, headers: { 'Content-Type': 'application/json' },
+      })
+    }
+    const client = new LicenceVerifier({ baseUrl: 'https://verify.example.com', fetch: fetchFn })
+    await client.checkForUpdate('KEY', '1.0.0')
+    assert.ok(capturedUrl.includes('current_version=1.0.0'), `URL should include current_version, got: ${capturedUrl}`)
+  })
+
+  it('throws LicenceNotFoundError on 404', async () => {
+    const client = makeClient(404, { error: 'Licence not found' })
+    await assert.rejects(() => client.checkForUpdate('BAD'), LicenceNotFoundError)
+  })
+
+  it('throws LicenceInactiveError on 422', async () => {
+    const client = makeClient(422, { error: 'Licence is suspended' })
+    await assert.rejects(() => client.checkForUpdate('KEY'), LicenceInactiveError)
+  })
+})
+
 // ─── caching ─────────────────────────────────────────────────────────────────
 
 describe('caching', () => {
