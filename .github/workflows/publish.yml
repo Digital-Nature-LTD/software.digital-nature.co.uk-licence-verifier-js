@@ -1,5 +1,26 @@
 name: Publish
 
+# ⚠️ THE FILENAME OF THIS FILE IS PART OF THE CREDENTIAL. DO NOT RENAME IT.
+#
+# This package publishes with npm TRUSTED PUBLISHING — there is no NPM_TOKEN.
+# npm's trusted-publisher config names the org, the repo and THE WORKFLOW
+# FILENAME, and the OIDC claim must match all three exactly, extension included.
+# Renaming this file, or moving this job elsewhere, revokes publishing.
+#
+# It fails in a way that does not say so: `npm error 404 ... could not be found
+# or you do not have permission`. A 404 on PUT is npm declining to reveal
+# whether the package exists — not a missing package. Provenance signs
+# successfully first, which makes it look as though auth worked.
+#
+# Nothing catches this before a tag: CI never runs the publish path, and npm
+# does not validate the trusted-publisher config when it is saved. The first
+# signal is a failed release. That is exactly how v0.3.0 failed on 2026-08-29,
+# when this job was split out of ci.yml into this file and the npmjs.com config
+# still named ci.yml.
+#
+# If this file ever must be renamed, change the workflow filename in the
+# package's trusted-publisher settings on npmjs.com FIRST.
+
 # Tags only. This used to be a job inside ci.yml gated on
 # `if: startsWith(github.ref, 'refs/tags/v')`, which worked but reported a
 # "Publish to npm — skipping" check on every pull request. A separate workflow
