@@ -12,6 +12,19 @@ export interface VerifyResult {
   productSlug: string
   status: string
   expiresAt: string | null
+  /**
+   * The package this licence is on, or null for an ordinary product.
+   *
+   * Added when packages arrived. An older server, or a product sold before
+   * packages existed, omits it — so it arrives `undefined` and is normalised to
+   * `null` rather than being left to read as "no answer".
+   */
+  package: string | null
+  /**
+   * Every add-on the licence grants — those included in its package and those
+   * bought separately, deduped. `[]` for an ordinary product.
+   */
+  addons: string[]
 }
 
 export interface ActivateResult {
@@ -41,6 +54,19 @@ export interface InfoResult {
   activationLimit: number | null
   activationsUsed: number
   domains: LicenceDomain[]
+  /**
+   * The package this licence is on, or null for an ordinary product.
+   *
+   * Added when packages arrived. An older server, or a product sold before
+   * packages existed, omits it — so it arrives `undefined` and is normalised to
+   * `null` rather than being left to read as "no answer".
+   */
+  package: string | null
+  /**
+   * Every add-on the licence grants — those included in its package and those
+   * bought separately, deduped. `[]` for an ordinary product.
+   */
+  addons: string[]
 }
 
 export interface UpdateResult {
@@ -58,6 +84,9 @@ export interface RawVerifyResponse {
   product_slug: string
   status: string
   expires_at: string | null
+  /** Optional: absent from servers older than packages. */
+  package?: string | null
+  addons?: string[]
 }
 
 export interface RawActivateResponse {
@@ -93,4 +122,7 @@ export interface RawInfoResponse {
   activation_limit: number | null
   activations_used: number
   domains: RawDomain[]
+  /** Optional: absent from servers older than packages. */
+  package?: string | null
+  addons?: string[]
 }

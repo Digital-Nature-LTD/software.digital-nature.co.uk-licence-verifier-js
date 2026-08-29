@@ -37,6 +37,29 @@ describe('verify', () => {
     assert.equal(result.expiresAt, null)
   })
 
+  it('normalises packages and add-ons when the server sends them', async () => {
+    const client = makeClient(200, {
+      valid: true, licence_key: 'ABC-123', product_slug: 'fa-pro',
+      status: 'active', expires_at: null,
+      package: 'fa-pro', addons: ['bookings', 'embed'],
+    })
+    const result = await client.verify('ABC-123')
+    assert.equal(result.package, 'fa-pro')
+    assert.deepEqual(result.addons, ['bookings', 'embed'])
+  })
+
+  it('normalises them to null and [] when the server is OLDER than packages', async () => {
+    // The fields are additive, so a plugin talking to a verify service that
+    // predates them must not receive `undefined` — every consumer would then
+    // write the same `?? []` before it could count anything.
+    const client = makeClient(200, {
+      valid: true, licence_key: 'ABC-123', product_slug: 'my-plugin',
+      status: 'active', expires_at: null,
+    })
+    const result = await client.verify('ABC-123')
+    assert.equal(result.package, null)
+    assert.deepEqual(result.addons, [])
+  })
   it('throws LicenceNotFoundError on 404', async () => {
     const client = makeClient(404, { error: 'Licence not found' })
     await assert.rejects(() => client.verify('BAD'), LicenceNotFoundError)
@@ -103,6 +126,23 @@ describe('deactivate', () => {
 // ─── info ─────────────────────────────────────────────────────────────────────
 
 describe('info', () => {
+  it('carries packages and add-ons through, defaulting when absent', async () => {
+    const withThem = makeClient(200, {
+      licence_key: 'ABC-123', product_slug: 'fa-pro', status: 'active', expires_at: null,
+      activation_limit: 5, activations_used: 1, domains: [],
+      package: 'fa-pro', addons: ['bookings'],
+    })
+    assert.deepEqual((await withThem.info('ABC-123')).addons, ['bookings'])
+
+    const without = makeClient(200, {
+      licence_key: 'ABC-123', product_slug: 'my-plugin', status: 'active', expires_at: null,
+      activation_limit: 5, activations_used: 1, domains: [],
+    })
+    const older = await without.info('ABC-123')
+    assert.equal(older.package, null)
+    assert.deepEqual(older.addons, [])
+  })
+
   it('returns a camelCase result with mapped domains', async () => {
     const client = makeClient(200, {
       licence_key: 'ABC-123', product_slug: 'my-plugin', status: 'active',
