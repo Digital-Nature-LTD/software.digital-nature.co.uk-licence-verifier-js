@@ -76,6 +76,11 @@ export class LicenceVerifier {
       productSlug: raw.product_slug,
       status: raw.status,
       expiresAt: raw.expires_at,
+      // Normalised, not passed through: a server older than packages omits
+      // these entirely, and `undefined` would make every consumer write the
+      // same `?? []` before it could count anything.
+      package: raw.package ?? null,
+      addons: raw.addons ?? [],
     }
     this.setCache(cacheKey, result)
     return result
@@ -126,6 +131,8 @@ export class LicenceVerifier {
       expiresAt: raw.expires_at,
       activationLimit: raw.activation_limit,
       activationsUsed: raw.activations_used,
+      package: raw.package ?? null,
+      addons: raw.addons ?? [],
       domains: raw.domains.map(d => ({
         domain: d.domain,
         domainType: d.domain_type,
