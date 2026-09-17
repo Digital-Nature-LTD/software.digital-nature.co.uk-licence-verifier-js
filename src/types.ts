@@ -6,6 +6,14 @@ export interface LicenceVerifierOptions {
   fetch?: typeof globalThis.fetch
 }
 
+/** One add-on held on a free trial. */
+export interface TrialGrant {
+  /** The add-on slug, as it appears in `addons`. */
+  addon: string
+  /** ISO 8601. From this moment the add-on is no longer granted. */
+  endsAt: string
+}
+
 export interface VerifyResult {
   valid: boolean
   licenceKey: string
@@ -25,6 +33,15 @@ export interface VerifyResult {
    * bought separately, deduped. `[]` for an ordinary product.
    */
   addons: string[]
+  /**
+   * Which of `addons` are held on a FREE TRIAL, and when each stops granting.
+   * `[]` when none.
+   *
+   * Added with free trials. `addons` already leaves out a trial that has ended,
+   * so a consumer that ignores this still enforces the end; read it to show
+   * "N days left". An older server omits it, normalised to `[]`.
+   */
+  trials: TrialGrant[]
 }
 
 export interface ActivateResult {
@@ -67,6 +84,15 @@ export interface InfoResult {
    * bought separately, deduped. `[]` for an ordinary product.
    */
   addons: string[]
+  /**
+   * Which of `addons` are held on a FREE TRIAL, and when each stops granting.
+   * `[]` when none.
+   *
+   * Added with free trials. `addons` already leaves out a trial that has ended,
+   * so a consumer that ignores this still enforces the end; read it to show
+   * "N days left". An older server omits it, normalised to `[]`.
+   */
+  trials: TrialGrant[]
 }
 
 export interface UpdateResult {
@@ -87,6 +113,13 @@ export interface RawVerifyResponse {
   /** Optional: absent from servers older than packages. */
   package?: string | null
   addons?: string[]
+  /** Optional: absent from servers older than free trials. */
+  trials?: RawTrialGrant[]
+}
+
+export interface RawTrialGrant {
+  addon: string
+  ends_at: string
 }
 
 export interface RawActivateResponse {
@@ -125,4 +158,6 @@ export interface RawInfoResponse {
   /** Optional: absent from servers older than packages. */
   package?: string | null
   addons?: string[]
+  /** Optional: absent from servers older than free trials. */
+  trials?: RawTrialGrant[]
 }

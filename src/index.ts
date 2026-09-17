@@ -15,4 +15,5 @@ export type {
   InfoResult,
   UpdateResult,
   LicenceDomain,
+  TrialGrant,
 } from './types.js'

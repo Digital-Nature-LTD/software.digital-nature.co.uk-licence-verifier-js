@@ -33,6 +33,23 @@ const info = await verifier.info('XXXX-XXXX-XXXX-XXXX')
 // { licenceKey: '...', productSlug: '...', status: 'active', activationsUsed: 1, activationLimit: 2, domains: [...] }
 ```
 
+## Packages, add-ons and free trials
+
+`verify` and `info` also say what the licence grants:
+
+```ts
+const { package: pkg, addons, trials } = await verifier.verify(key)
+// pkg:    'club-platform'            — or null for an ordinary product
+// addons: ['club-platform-pitch-x-3'] — everything granted RIGHT NOW
+// trials: [{ addon: 'club-platform-pitch-x-3', endsAt: '2026-10-17T09:00:00.000Z' }]
+```
+
+- `addons` never includes a trial that has ended, so gating on `addons` alone
+  already enforces a trial's end.
+- `trials` says which of `addons` are on a free trial and when each stops. Use it
+  to show "N days left". `[]` when none, and from a server older than trials.
+- A cached `verify`/`info` result is never kept past the soonest trial end.
+
 ## Options
 
 | Option | Type | Default | Description |
