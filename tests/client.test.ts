@@ -60,6 +60,21 @@ describe('verify', () => {
     assert.equal(result.package, null)
     assert.deepEqual(result.addons, [])
   })
+  it('maps free trials, and normalises them to [] when the server is OLDER than trials', async () => {
+    const withTrial = makeClient(200, {
+      valid: true, licence_key: 'ABC-123', product_slug: 'club-platform', status: 'active', expires_at: null,
+      package: 'club-platform', addons: ['pitch-x-3'],
+      trials: [{ addon: 'pitch-x-3', ends_at: '2026-10-17T09:00:00.000Z' }],
+    })
+    assert.deepEqual((await withTrial.verify('ABC-123')).trials, [{ addon: 'pitch-x-3', endsAt: '2026-10-17T09:00:00.000Z' }])
+
+    const older = makeClient(200, {
+      valid: true, licence_key: 'ABC-123', product_slug: 'club-platform', status: 'active', expires_at: null,
+      package: 'club-platform', addons: ['pitch-x-3'],
+    })
+    assert.deepEqual((await older.verify('ABC-123')).trials, [])
+  })
+
   it('throws LicenceNotFoundError on 404', async () => {
     const client = makeClient(404, { error: 'Licence not found' })
     await assert.rejects(() => client.verify('BAD'), LicenceNotFoundError)
@@ -141,6 +156,14 @@ describe('info', () => {
     const older = await without.info('ABC-123')
     assert.equal(older.package, null)
     assert.deepEqual(older.addons, [])
+    assert.deepEqual(older.trials, [])
+
+    const trialling = makeClient(200, {
+      licence_key: 'ABC-123', product_slug: 'fa-pro', status: 'active', expires_at: null,
+      activation_limit: 5, activations_used: 1, domains: [],
+      package: 'fa-pro', addons: ['bookings'], trials: [{ addon: 'bookings', ends_at: '2026-10-01T00:00:00.000Z' }],
+    })
+    assert.deepEqual((await trialling.info('ABC-123')).trials, [{ addon: 'bookings', endsAt: '2026-10-01T00:00:00.000Z' }])
   })
 
   it('returns a camelCase result with mapped domains', async () => {
@@ -247,6 +270,25 @@ describe('caching', () => {
     await client.activate('KEY', 'example.com')  // invalidates cache
     await client.verify('KEY')       // call 2 — must re-fetch
     assert.equal(calls, 2)
+  })
+
+  it('never caches past a free trial’s end, so a cached answer cannot extend the trial', async () => {
+    let calls = 0
+    const endsSoon = new Date(Date.now() + 50).toISOString()
+    const fetchFn: typeof globalThis.fetch = async () => {
+      calls++
+      return new Response(JSON.stringify({
+        valid: true, licence_key: 'KEY', product_slug: 'p', status: 'active', expires_at: null,
+        package: 'p', addons: ['a'], trials: [{ addon: 'a', ends_at: endsSoon }],
+      }), { status: 200, headers: { 'Content-Type': 'application/json' } })
+    }
+    const client = new LicenceVerifier({ baseUrl: 'https://verify.example.com', cacheTtl: 60_000, fetch: fetchFn })
+    await client.verify('KEY')
+    await client.verify('KEY')
+    assert.equal(calls, 1, 'cached while the trial runs')
+    await new Promise((r) => setTimeout(r, 80))
+    await client.verify('KEY')
+    assert.equal(calls, 2, 'asked again once the trial has ended')
   })
 
   it('caching is disabled when cacheTtl is 0', async () => {

@@ -2,6 +2,7 @@ import type {
   LicenceVerifierOptions,
   VerifyResult, ActivateResult, DeactivateResult, InfoResult, UpdateResult,
   RawVerifyResponse, RawActivateResponse, RawDeactivateResponse, RawInfoResponse, RawUpdateResponse,
+  RawTrialGrant, TrialGrant,
 } from './types.js'
 import {
   LicenceVerifierError, LicenceNotFoundError, LicenceInactiveError,
@@ -31,9 +32,12 @@ export class LicenceVerifier {
     return entry.value as T
   }
 
-  private setCache(key: string, value: unknown): void {
+  private setCache(key: string, value: unknown, notAfter?: number): void {
     if (this.cacheTtl > 0) {
-      this.cache.set(key, { value, expiresAt: Date.now() + this.cacheTtl })
+      // Never cache past a free trial's end: a cached answer would otherwise
+      // keep granting the add-on for up to a TTL after the trial stopped.
+      const expiresAt = Math.min(Date.now() + this.cacheTtl, notAfter ?? Infinity)
+      if (expiresAt > Date.now()) this.cache.set(key, { value, expiresAt })
     }
   }
 
@@ -81,8 +85,9 @@ export class LicenceVerifier {
       // same `?? []` before it could count anything.
       package: raw.package ?? null,
       addons: raw.addons ?? [],
+      trials: mapTrials(raw.trials),
     }
-    this.setCache(cacheKey, result)
+    this.setCache(cacheKey, result, soonestEnd(result.trials))
     return result
   }
 
@@ -133,13 +138,25 @@ export class LicenceVerifier {
       activationsUsed: raw.activations_used,
       package: raw.package ?? null,
       addons: raw.addons ?? [],
+      trials: mapTrials(raw.trials),
       domains: raw.domains.map(d => ({
         domain: d.domain,
         domainType: d.domain_type,
         activatedAt: d.activated_at,
       })),
     }
-    this.setCache(cacheKey, result)
+    this.setCache(cacheKey, result, soonestEnd(result.trials))
     return result
   }
+}
+
+/** Normalised: an older server omits `trials`, and `undefined` is not "none". */
+function mapTrials(raw: RawTrialGrant[] | undefined): TrialGrant[] {
+  return (raw ?? []).map((t) => ({ addon: t.addon, endsAt: t.ends_at }))
+}
+
+/** The earliest trial end as epoch ms, or undefined when there is none. */
+function soonestEnd(trials: TrialGrant[]): number | undefined {
+  const ends = trials.map((t) => Date.parse(t.endsAt)).filter((n) => Number.isFinite(n))
+  return ends.length ? Math.min(...ends) : undefined
 }
