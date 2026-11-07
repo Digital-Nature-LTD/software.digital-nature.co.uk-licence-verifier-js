@@ -1,17 +1,17 @@
-# @digital-nature/licence-verifier
+# @digital-nature-ltd/licence-verifier
 
 JavaScript/TypeScript client for the [Digital Nature](https://digital-nature.co.uk) licence verification API.
 
 ## Installation
 
 ```bash
-npm install @digital-nature/licence-verifier
+npm install @digital-nature-ltd/licence-verifier
 ```
 
 ## Usage
 
 ```ts
-import { LicenceVerifier } from '@digital-nature/licence-verifier'
+import { LicenceVerifier } from '@digital-nature-ltd/licence-verifier'
 
 const verifier = new LicenceVerifier({
   baseUrl: 'https://verify.software.digital-nature.co.uk',
@@ -70,7 +70,7 @@ import {
   ActivationLimitReachedError,
   DomainAlreadyActiveError,
   LicenceVerifierError,  // base class
-} from '@digital-nature/licence-verifier'
+} from '@digital-nature-ltd/licence-verifier'
 
 try {
   await verifier.activate(key, domain)
